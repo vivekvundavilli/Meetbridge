@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeetBridge – Choose Community</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          animation: {
+            'slide-in-left': 'slideInLeft .3s ease-out',
+            'slide-in-right': 'slideInRight .3s ease-out',
+            'fade-in': 'fadeIn .4s ease-out',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Emoji Picker -->
+  <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/browser@latest/dist/emoji-mart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@emoji-mart/browser@latest/dist/emoji-mart.css" rel="stylesheet">
+
+  <!-- Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    @keyframes slideInLeft { from { transform: translateX(-50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideInRight { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .glass { background: rgba(255,255,255,.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.2); }
+    .typing::after { content: ''; animation: typing 1.5s infinite; }
+    @keyframes typing { 0%,100%{content:'.'} 33%{content:'..'} 66%{content:'...'}}
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-sky-900 dark:to-indigo-900 min-h-screen flex flex-col text-gray-800 dark:text-gray-100">
+
+  <!-- ====================== NAVBAR ====================== -->
+  <nav class="glass shadow-lg backdrop-blur-md border-b border-white/20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-3xl">MeetBridge Chat</span>
+      </div>
+      <div class="flex items-center space-x-3">
+        <a href="dashboard.html" class="text-sky-600 dark:text-sky-400 font-medium hover:underline flex items-center gap-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </a>
+        <button id="themeToggle" class="p-2 rounded-full hover:bg-white/20 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ====================== COMMUNITY SELECTOR ====================== -->
+  <section id="communitySelector" class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white/80 dark:bg-gray-800/80 glass rounded-3xl shadow-2xl p-8">
+
+      <h2 class="text-2xl font-bold text-center mb-6 text-sky-700 dark:text-sky-300">
+        Choose a Community
+      </h2>
+
+      <!-- Existing Communities -->
+      <div id="communityList" class="grid gap-3 mb-6">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- Create New -->
+      <div class="border-t border-gray-300 dark:border-gray-600 pt-6">
+        <h3 class="text-lg font-semibold mb-3 text-center">Create a New Community</h3>
+        <div class="flex flex-col gap-3">
+          <input id="newCommunityName" type="text" placeholder="Community name"
+                 class="p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          <input id="newCommunityDesc" type="text" placeholder="Short description (optional)"
+                 class="p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          <button id="createCommunityBtn"
+                  class="bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white py-3 rounded-xl font-semibold transition transform hover:scale-105">
+            Create Community
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== CHAT VIEW (hidden initially) ====================== -->
+  <section id="chatView" class="hidden flex-1 flex items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-3xl bg-white/80 dark:bg-gray-800/80 glass rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[80vh] sm:h-[600px] border border-white/30">
+
+      <!-- Chat Header -->
+      <div class="bg-gradient-to-r from-sky-500 to-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
+        <div>
+          <h2 id="chatHeaderTitle" class="text-xl font-bold">Community</h2>
+          <p id="chatHeaderDesc" class="text-xs opacity-90"></p>
+        </div>
+        <button id="leaveCommunityBtn" class="text-xs underline hover:opacity-70">Leave</button>
+      </div>
+
+      <!-- Messages -->
+      <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-gray-900/50"></div>
+
+      <!-- Typing Indicator -->
+      <div id="typingIndicator" class="px-4 pb-2 hidden">
+        <div class="flex items-center space-x-2">
+          <div class="flex space-x-1">
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:.1s"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:.2s"></div>
+          </div>
+          <span class="text-sm text-gray-500">Someone is typing<span class="typing"></span></span>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+        <div class="flex gap-2 items-end">
+          <button id="emojiBtn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <span class="text-2xl">Emoji</span>
+          </button>
+          <input id="messageInput" type="text" placeholder="Type a message..."
+                 class="flex-1 p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                 autocomplete="off">
+          <button id="sendBtn"
+                  class="bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Emoji Picker -->
+  <div id="emojiPicker" class="hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50"></div>
+
+  <!-- ====================== SCRIPTS ====================== -->
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module">
+    import { auth, db } from "./firebase-config.js";
+    import {
+      signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      collection, addDoc, query, orderBy, onSnapshot, serverTimestamp,
+      doc, getDoc, updateDoc, arrayUnion, setDoc
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // ---------- ELEMENTS ----------
+    const logoutBtn = document.getElementById("logoutBtn");
+    const themeToggle = document.getElementById("themeToggle");
+    const communitySelector = document.getElementById("communitySelector");
+    const chatView = document.getElementById("chatView");
+    const communityList = document.getElementById("communityList");
+    const newCommunityName = document.getElementById("newCommunityName");
+    const newCommunityDesc = document.getElementById("newCommunityDesc");
+    const createCommunityBtn = document.getElementById("createCommunityBtn");
+    const leaveCommunityBtn = document.getElementById("leaveCommunityBtn");
+    const chatHeaderTitle = document.getElementById("chatHeaderTitle");
+    const chatHeaderDesc = document.getElementById("chatHeaderDesc");
+    const messagesDiv = document.getElementById("messages");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const emojiBtn = document.getElementById("emojiBtn");
+    const emojiPicker = document.getElementById("emojiPicker");
+
+    let currentUser = null;
+    let currentCommunityId = null;
+    let messagesUnsub = null;
+    let picker = null;
+
+    // ---------- AUTH ----------
+    onAuthStateChanged(auth, user => {
+      if (!user) { window.location.href = "index.html"; return; }
+      currentUser = user;
+      loadCommunities();
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+
+    // ---------- DARK MODE ----------
+    themeToggle.addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+      localStorage.theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+    });
+    if (localStorage.theme === "dark" || (!localStorage.theme && window.matchMedia("(prefers-color-scheme: dark)").matches))
+      document.documentElement.classList.add("dark");
+
+    // ---------- COMMUNITY LIST ----------
+    async function loadCommunities() {
+      const q = query(collection(db, "communities"), orderBy("createdAt", "desc"));
+      onSnapshot(q, snap => {
+        communityList.innerHTML = "";
+        snap.forEach(doc => {
+          const data = doc.data();
+          const card = document.createElement("div");
+          card.className = "glass p-4 rounded-xl cursor-pointer hover:scale-105 transition transform";
+          card.innerHTML = `
+            <h4 class="font-semibold text-sky-700 dark:text-sky-300">${data.name}</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">${data.description || "No description"}</p>
+            <p class="text-xs text-gray-500 mt-1">${data.memberCount || 1} member${(data.memberCount||1)>1?'s':''}</p>
+          `;
+          card.onclick = () => enterCommunity(doc.id, data);
+          communityList.appendChild(card);
+        });
+      });
+    }
+
+    // ---------- CREATE COMMUNITY ----------
+    createCommunityBtn.addEventListener("click", async () => {
+      const name = newCommunityName.value.trim();
+      const desc = newCommunityDesc.value.trim();
+      if (!name) return alert("Community name is required");
+
+      const ref = await addDoc(collection(db, "communities"), {
+        name,
+        description: desc,
+        creatorUid: currentUser.uid,
+        createdAt: serverTimestamp(),
+        memberCount: 1,
+        members: [currentUser.uid]
+      });
+      newCommunityName.value = "";
+      newCommunityDesc.value = "";
+      enterCommunity(ref.id, { name, description: desc });
+    });
+
+    // ---------- ENTER COMMUNITY ----------
+    async function enterCommunity(comId, data) {
+      currentCommunityId = comId;
+      chatHeaderTitle.textContent = data.name;
+      chatHeaderDesc.textContent = data.description || "";
+      communitySelector.classList.add("hidden");
+      chatView.classList.remove("hidden");
+
+      // Update member count & list
+      const comDoc = doc(db, "communities", comId);
+      await updateDoc(comDoc, {
+        memberCount: arrayUnion(currentUser.uid).length,
+        members: arrayUnion(currentUser.uid)
+      });
+
+      // Show share link
+      const shareUrl = `${window.location.origin}${window.location.pathname}?c=${comId}`;
+      const shareBtn = document.createElement("button");
+      shareBtn.className = "ml-4 text-xs underline hover:opacity-70";
+      shareBtn.textContent = "Copy Invite Link";
+      shareBtn.onclick = () => {
+        navigator.clipboard.writeText(shareUrl).then(() => alert("Invite link copied!"));
+      };
+      chatHeaderTitle.parentElement.appendChild(shareBtn);
+
+      loadChat(comId);
+    }
+
+    // ---------- LEAVE COMMUNITY ----------
+    leaveCommunityBtn.onclick = () => {
+      if (messagesUnsub) messagesUnsub();
+      chatView.classList.add("hidden");
+      communitySelector.classList.remove("hidden");
+      currentCommunityId = null;
+      // optional: remove user from members array
+    };
+
+    // ---------- CHAT ----------
+    function loadChat(comId) {
+      const chatCol = collection(db, "communities", comId, "messages");
+      const q = query(chatCol, orderBy("timestamp"));
+      messagesUnsub = onSnapshot(q, snap => {
+        messagesDiv.innerHTML = "";
+        snap.forEach(d => renderMessage(d.id, d.data()));
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+    }
+
+    function renderMessage(id, data) {
+      const isMine = currentUser && data.uid === currentUser.uid;
+      const el = document.createElement("div");
+      el.className = `flex ${isMine ? "justify-end" : "justify-start"} animate-fade-in`;
+      el.innerHTML = `
+        <div class="flex items-end gap-2 max-w-[75%] group">
+          ${!isMine ? `<img src="${data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=random`}" class="w-8 h-8 rounded-full shadow-sm">` : ''}
+          <div class="${isMine
+            ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white"
+            : "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600"
+          } rounded-2xl px-4 py-3 shadow-sm ${isMine ? "slide-in-right" : "slide-in-left"}">
+            <p class="font-medium text-sm ${isMine ? "text-sky-50" : "text-sky-700 dark:text-sky-400"}">${data.username}</p>
+            <p class="text-sm break-words">${data.text}</p>
+            <p class="text-xs mt-1 ${isMine ? "text-sky-200" : "text-gray-500"}">${formatTime(data.timestamp)}</p>
+          </div>
+          ${isMine ? `<img src="${currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName||currentUser.email.split("@")[0])}&background=random`}" class="w-8 h-8 rounded-full shadow-sm">` : ''}
+        </div>
+      `;
+      messagesDiv.appendChild(el);
+    }
+
+    function formatTime(ts) {
+      if (!ts) return "Just now";
+      const d = ts.toDate();
+      const diff = Date.now() - d;
+      if (diff < 6e4) return "Just now";
+      if (diff < 36e5) return `${Math.floor(diff/6e4)}m ago`;
+      if (diff < 864e5) return `${Math.floor(diff/36e5)}h ago`;
+      return d.toLocaleDateString();
+    }
+
+    // ---------- SEND MESSAGE ----------
+    async function sendMessage() {
+      const txt = messageInput.value.trim();
+      if (!txt || !currentCommunityId) return;
+      const chatCol = collection(db, "communities", currentCommunityId, "messages");
+      await addDoc(chatCol, {
+        text: txt,
+        uid: currentUser.uid,
+        username: currentUser.displayName || currentUser.email.split("@")[0],
+        photoURL: currentUser.photoURL || null,
+        timestamp: serverTimestamp()
+      });
+      messageInput.value = "";
+      if (!sessionStorage.getItem("firstMsg")) {
+        confetti({particleCount:80,spread:70,origin:{y:0.8}});
+        sessionStorage.setItem("firstMsg","1");
+      }
+    }
+    sendBtn.onclick = sendMessage;
+    messageInput.addEventListener("keypress", e=>{if(e.key==="Enter")sendMessage();});
+
+    // ---------- EMOJI PICKER ----------
+    emojiBtn.onclick = () => {
+      if (picker) { emojiPicker.classList.toggle("hidden"); return; }
+      picker = new EmojiMart.Picker({
+        theme: document.documentElement.classList.contains("dark")?"dark":"light",
+        onEmojiSelect: e=>{ messageInput.value += e.native; messageInput.focus(); emojiPicker.classList.add("hidden"); },
+        parent: emojiPicker
+      });
+      emojiPicker.classList.remove("hidden");
+    };
+    document.addEventListener("click", e=>{
+      if (!emojiBtn.contains(e.target) && !emojiPicker.contains(e.target))
+        emojiPicker.classList.add("hidden");
+    });
+
+    // ---------- URL PARAM (direct join) ----------
+    const urlParams = new URLSearchParams(location.search);
+    const joinId = urlParams.get("c");
+    if (joinId) {
+      (async () => {
+        const snap = await getDoc(doc(db, "communities", joinId));
+        if (snap.exists()) enterCommunity(joinId, snap.data());
+        else alert("Community not found");
+      })();
+    }
+  </script>
+</body>
+</html>

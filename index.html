@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeetBridge Login</title>
+
+  <!-- ✅ Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="site min-h-screen flex items-center justify-center text-slate-900">
+  <div class="bg-white/90 backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-[90%] sm:w-[380px] text-center border border-white/40">
+    <h1 class="text-4xl font-bold text-indigo-600 mb-2">🤝 MeetBridge</h1>
+    <p class="text-gray-600 mb-6">Connect • Collaborate • Grow</p>
+
+    <!-- 🔹 LOGIN FORM -->
+    <div id="loginForm">
+      <input id="email" type="email" placeholder="Email"
+        class="w-full p-3 mb-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none" />
+      <input id="password" type="password" placeholder="Password"
+        class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none" />
+      <button id="loginBtn"
+        class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 transition-all">Login</button>
+      <p class="text-sm text-gray-600 mt-4">Don’t have an account? 
+        <a href="#" id="showSignup" class="text-indigo-600 font-semibold hover:underline">Sign Up</a>
+      </p>
+    </div>
+
+    <!-- 🔹 SIGNUP FORM -->
+    <div id="signupForm" class="hidden">
+      <input id="signupEmail" type="email" placeholder="Email"
+        class="w-full p-3 mb-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none" />
+      <input id="signupPassword" type="password" placeholder="Password"
+        class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none" />
+      <button id="signupBtn"
+        class="w-full bg-green-600 text-white font-semibold py-2.5 rounded-lg hover:bg-green-700 transition-all">Create Account</button>
+      <p class="text-sm text-gray-600 mt-4">Already have an account? 
+        <a href="#" id="showLogin" class="text-indigo-600 font-semibold hover:underline">Login</a>
+      </p>
+    </div>
+
+    <p class="text-xs text-gray-400 mt-6">© 2025 MeetBridge</p>
+  </div>
+
+  <!-- ✅ Firebase SDKs -->
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module">
+    import { auth } from "./firebase-config.js";
+    import {
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const showSignup = document.getElementById("showSignup");
+    const showLogin = document.getElementById("showLogin");
+
+    // 🔁 Switch between login and signup forms
+    showSignup.addEventListener("click", () => {
+      loginForm.classList.add("hidden");
+      signupForm.classList.remove("hidden");
+    });
+    showLogin.addEventListener("click", () => {
+      signupForm.classList.add("hidden");
+      loginForm.classList.remove("hidden");
+    });
+
+    // ✅ Login logic
+    loginBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        alert("❌ " + error.message);
+      }
+    });
+
+    // 🆕 Signup logic
+    signupBtn.addEventListener("click", async () => {
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value.trim();
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("✅ Account created! Please log in.");
+        signupForm.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+      } catch (error) {
+        alert("❌ " + error.message);
+      }
+    });
+
+    // 🚀 Auto-redirect if already logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) window.location.href = "dashboard.html";
+    });
+  </script>
+</body>
+</html>

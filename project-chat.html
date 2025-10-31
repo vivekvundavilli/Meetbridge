@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeetBridge – Project Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="site min-h-screen flex flex-col text-slate-900 bg-sky-100">
+
+  <nav class="w-full bg-white shadow-sm flex justify-between items-center px-6 py-3">
+    <h1 class="text-2xl font-bold text-sky-500">💬 Project Chat Room</h1>
+    <div>
+    <a href="collab.html" class="text-sky-600 font-medium hover:text-sky-800 transition-all mr-4">← Back to Collaborations</a>
+    <button id="logoutBtn" class="ml-3 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 text-white">Logout</button>
+    </div>
+  </nav>
+
+  <div class="flex-grow flex flex-col items-center justify-center">
+  <div class="bg-white p-6 mt-10 w-[90%] sm:w-[600px] rounded-2xl shadow-xl flex flex-col p-5">
+      <h2 id="chatTitle" class="text-xl font-semibold mb-4 text-center">Loading chat...</h2>
+
+      <div id="messages" class="flex-1 overflow-y-auto bg-slate-50 text-black rounded-lg p-4 h-[400px] space-y-3 mb-4 shadow-inner border"></div>
+
+      <div class="flex gap-2">
+        <input id="messageInput" type="text" placeholder="Type a message..." 
+          class="flex-1 p-3 rounded-lg text-black border focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+        <button id="sendBtn" class="bg-sky-500 px-5 rounded-lg hover:bg-sky-600 font-semibold text-white">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module">
+    import { auth, db } from "./firebase-config.js";
+    import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { 
+      collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const messageInput = document.getElementById("messageInput");
+    const messagesDiv = document.getElementById("messages");
+    const chatTitle = document.getElementById("chatTitle");
+
+    // 1. Get the Project/Chat ID from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatRoomId = urlParams.get('id');
+    
+    if (!chatRoomId) {
+      alert("Error: No chat room ID specified.");
+      window.location.href = "dashboard.html";
+    }
+
+    // 2. Create a reference to the specific sub-collection for this chat
+    // e.g., /collabAccepted/PROJECT_ID_ABC/messages
+    const chatRef = collection(db, "collabAccepted", chatRoomId, "messages");
+    
+    let currentUserEmail = "";
+
+    // 3. Auth state check
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      currentUserEmail = user.email;
+      checkPermissionsAndLoadChat(user);
+    });
+
+    // 4. Check if the user is allowed in this room
+    async function checkPermissionsAndLoadChat(user) {
+      const projectDocRef = doc(db, "collabAccepted", chatRoomId);
+      const docSnap = await getDoc(projectDocRef);
+
+      if (!docSnap.exists()) {
+        alert("Error: This project chat does not exist.");
+        window.location.href = "dashboard.html";
+        return;
+      }
+
+      const data = docSnap.data();
+      
+      // SECURITY CHECK: Is the current user in the 'participants' array?
+      if (data.participants && data.participants.includes(currentUserEmail)) {
+        // User is allowed.
+        const otherUser = data.from === currentUserEmail ? data.to : data.from;
+        chatTitle.textContent = `Chat with ${otherUser.split('@')[0]}`;
+        
+        loadMessages();
+        setupSendButton(user);
+        
+      } else {
+        // User is not a participant. Boot them.
+        alert("Access Denied: You are not a member of this project chat.");
+        window.location.href = "dashboard.html";
+      }
+    }
+
+    // 5. Load messages (only runs if permission check passes)
+    function loadMessages() {
+      const q = query(chatRef, orderBy("timestamp"));
+      onSnapshot(q, (snapshot) => {
+        messagesDiv.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const message = document.createElement("div");
+          const isMine = data.uid === auth.currentUser.uid;
+
+          message.className = `p-3 rounded-xl max-w-[80%] break-words ${
+            isMine ? "bg-sky-200 self-end ml-auto text-right" : "bg-gray-100 text-left"
+          }`;
+
+          message.innerHTML = `
+            <strong class="text-sky-700">${data.username || "User"}</strong><br>
+            <span class="text-gray-800">${data.text}</span>
+          `;
+          messagesDiv.appendChild(message);
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+    }
+
+    // 6. Set up send button (only runs if permission check passes)
+    function setupSendButton(user) {
+      sendBtn.addEventListener("click", async () => {
+        const text = messageInput.value.trim();
+        if (!text) return;
+
+        await addDoc(chatRef, {
+          text,
+          uid: user.uid,
+          username: user.email.split("@")[0],
+          timestamp: serverTimestamp(),
+        });
+        messageInput.value = "";
+      });
+    }
+
+    // --- Logout ---
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

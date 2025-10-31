@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeetBridge – Collaboration Requests</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .site {
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+
+    .hover-scale {
+      transition: transform 0.2s ease;
+    }
+
+    .hover-scale:hover {
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body class="site min-h-screen flex flex-col items-center text-slate-900">
+
+  <header class="glass-card w-full py-4 px-6 flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-white">🤝 Collaboration Requests</h1>
+    <a href="dashboard.html" class="bg-white/30 px-4 py-2 rounded-lg hover:bg-white/40 transition-all text-white backdrop-blur-sm">🏠 Dashboard</a>
+  </header>
+
+  <main class="w-full max-w-3xl p-6">
+    <section class="glass-card hover-scale rounded-3xl p-6 mb-6">
+      <h2 class="text-xl font-bold mb-4 text-white">📩 Incoming Requests</h2>
+      <ul id="incomingList" class="space-y-4"></ul>
+    </section>
+
+    <section class="glass-card hover-scale rounded-3xl p-6">
+      <h2 class="text-xl font-bold mb-4 text-white">✅ Accepted Collaborations</h2>
+      <ul id="acceptedList" class="space-y-4"></ul>
+    </section>
+  </main>
+
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module">
+    import { db, auth } from "./firebase-config.js";
+    import {
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      where,
+      deleteDoc,
+      doc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const incomingList = document.getElementById("incomingList");
+    const acceptedList = document.getElementById("acceptedList");
+
+    const collabRef = collection(db, "collabRequests");
+    const acceptedRef = collection(db, "collabAccepted");
+
+    let currentUserEmail = "";
+
+    // 🧠 Get current user
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUserEmail = user.email;
+        loadRequests();
+        loadAccepted();
+      } else {
+        window.location.href = "index.html";
+      }
+    });
+
+    // 📥 Load incoming requests (Unchanged)
+    async function loadRequests() {
+      incomingList.innerHTML = "";
+      const q = query(collabRef, where("to", "==", currentUserEmail));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        incomingList.innerHTML = "<p>No new collaboration requests 😔</p>";
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const li = document.createElement("li");
+      li.className = "bg-slate-50 border p-4 rounded-lg text-slate-900";
+        li.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-slate-900 font-semibold">${data.from}</p>
+              <p class="text-sm text-slate-600">wants to collaborate with you</p>
+            </div>
+            <div class="space-x-2">
+              <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded" data-accept="${docSnap.id}">Accept</button>
+              <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" data-decline="${docSnap.id}">Decline</button>
+            </div>
+          </div>
+        `;
+        incomingList.appendChild(li);
+      });
+
+      // ✅ Accept or ❌ Decline handlers (Unchanged, but now saves participants array)
+      document.querySelectorAll("[data-accept]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-accept");
+          const docData = snapshot.docs.find((d) => d.id === id)?.data();
+          if (docData) {
+            await addDoc(acceptedRef, {
+              participants: [docData.from, docData.to],
+              from: docData.from,
+              to: docData.to,
+              timestamp: serverTimestamp(),
+            });
+            await deleteDoc(doc(db, "collabRequests", id));
+            alert(`✅ Collaboration with ${docData.from} accepted!`);
+            loadRequests();
+            loadAccepted();
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-decline]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-decline");
+          await deleteDoc(doc(db, "collabRequests", id));
+          alert("❌ Request declined");
+          loadRequests();
+        });
+      });
+    }
+
+    // --- 📂 UPDATED: Load accepted collaborations ---
+    // This function now adds an "Open Chat" button
+    async function loadAccepted() {
+      acceptedList.innerHTML = "";
+      // This query finds all projects where the current user is a participant
+      const q = query(acceptedRef, where("participants", "array-contains", currentUserEmail));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        acceptedList.innerHTML = "<p>No collaborations yet 💭</p>";
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const otherUser = data.from === currentUserEmail ? data.to : data.from;
+        
+        // This is the unique ID for the project, which we will use as the chat room ID
+        const chatRoomId = docSnap.id; 
+
+        const li = document.createElement("li");
+        // CHANGED: Added flex classes
+        li.className = "bg-green-100 border border-green-300 text-green-800 p-4 rounded-lg flex justify-between items-center";
+        
+        // CHANGED: Added the "Open Chat" button
+        li.innerHTML = `
+          <span>🤝 You are collaborating with ${otherUser}</span>
+          <a href="project-chat.html?id=${chatRoomId}" class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-1 rounded-lg">
+            Open Chat
+          </a>
+        `;
+        acceptedList.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>

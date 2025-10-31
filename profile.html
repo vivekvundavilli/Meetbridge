@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeetBridge – Profiles</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="site min-h-screen text-slate-900 flex flex-col items-center bg-sky-100">
+
+  <header class="bg-white shadow-sm py-4 px-6 w-full flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-sky-500">👥 Student Profiles</h1>
+    <a href="dashboard.html" class="bg-sky-500 px-4 py-2 rounded-lg hover:bg-sky-600 text-white transition-all">🏠 Dashboard</a>
+  </header>
+
+  <main class="w-full max-w-3xl p-6">
+    <section id="profile-section" class="bg-white rounded-3xl p-6 shadow-xl mb-6">
+      <h2 class="text-xl font-bold mb-4">Create Your Profile</h2>
+      <input type="text" id="name" placeholder="Enter your name" class="w-full mb-3 p-3 rounded-lg text-gray-900 border" />
+      <input type="text" id="skills" placeholder="Enter your skills (comma separated)" class="w-full mb-3 p-3 rounded-lg text-gray-900 border" />
+      <input type="text" id="interests" placeholder="Enter your interests" class="w-full mb-3 p-3 rounded-lg text-gray-900 border" />
+    <button id="saveProfile" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold px-4 py-2 rounded-lg">Save Profile</button>
+    </section>
+
+    <section id="profiles-list" class="bg-white rounded-3xl p-6 shadow-xl">
+      <h2 class="text-xl font-bold mb-4">👥 All Student Profiles</h2>
+      <ul id="profileList" class="space-y-4"></ul>
+    </section>
+  </main>
+
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module">
+    import { db } from "./firebase-config.js";
+    import { auth } from "./firebase-config.js";
+    import {
+      collection,
+      addDoc,
+      getDocs,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const profilesRef = collection(db, "studentProfiles");
+    const collabRef = collection(db, "collabRequests");
+
+    const nameInput = document.getElementById("name");
+    const skillsInput = document.getElementById("skills");
+    const interestsInput = document.getElementById("interests");
+    const saveButton = document.getElementById("saveProfile");
+    const profileList = document.getElementById("profileList");
+
+    let currentUserEmail = "";
+
+    // 🧩 Detect current user
+    onAuthStateChanged(auth, (user) => {
+      if (user) currentUserEmail = user.email;
+      else window.location.href = "index.html";
+    });
+
+    // Save new profile
+    saveButton.addEventListener("click", async () => {
+      const name = nameInput.value.trim();
+      const skills = skillsInput.value.trim();
+      const interests = interestsInput.value.trim();
+
+      if (!name || !skills || !interests) return alert("Please fill all fields!");
+
+      await addDoc(profilesRef, {
+        name,
+        skills,
+        interests,
+        email: currentUserEmail,
+        timestamp: serverTimestamp()
+      });
+
+      alert("✅ Profile Saved!");
+      nameInput.value = skillsInput.value = interestsInput.value = "";
+      loadProfiles();
+    });
+
+    // Load all profiles
+    async function loadProfiles() {
+      profileList.innerHTML = "";
+      const snapshot = await getDocs(profilesRef);
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        
+        li.className = "bg-white shadow-sm border p-4 rounded-lg text-gray-900";
+        li.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="font-bold text-lg text-slate-900">${data.name}</h3>
+              <p class="text-sm text-slate-600">🧠 ${data.skills}</p>
+              <p class="text-sm text-slate-600">💡 ${data.interests}</p>
+            </div>
+            ${
+              data.email !== currentUserEmail
+                // --- FIX 1: Added "data-email" attribute ---
+                ? `<button class="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1 rounded-lg" data-name="${data.name}" data-email="${data.email}">🤝 Request</button>`
+                : `<span class="text-sky-500 text-sm font-semibold">✨ Your Profile</span>`
+            }
+          </div>
+        `;
+        profileList.appendChild(li);
+      });
+
+      // 📨 Collaboration Request Handler
+      // --- FIX 2: Changed selector and logic ---
+      document.querySelectorAll("button[data-email]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const receiverName = btn.getAttribute("data-name");
+          const receiverEmail = btn.getAttribute("data-email"); // Get the email
+
+          await addDoc(collabRef, {
+            from: currentUserEmail,
+            to: receiverEmail, // Use the email here
+            timestamp: serverTimestamp()
+          });
+          // Show the name in the alert
+          alert(`✅ Collaboration request sent to ${receiverName}!`);
+        });
+      });
+    }
+
+    loadProfiles();
+  </script>
+</body>
+</html>
