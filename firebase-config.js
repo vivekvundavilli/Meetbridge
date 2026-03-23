@@ -5,13 +5,13 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDyctJHFem6C2pEQ9tZ_ZNA9jgBtpoDhT8",
-  authDomain: "meet-bridge-57e99.firebaseapp.com",
-  projectId: "meet-bridge-57e99",
-  storageBucket: "meet-bridge-57e99.firebasestorage.app",
-  messagingSenderId: "10604477839",
-  appId: "1:10604477839:web:fa066b2f4f5a1414fddffa",
-  measurementId: "G-BNNCJ1HMVZ"
+  apiKey: "AIzaSyCi9Yi2T2H1GPKjnFr6oX_ZpC5JFEfo7XI",
+  authDomain: "meetbridge-bb72b.firebaseapp.com",
+  projectId: "meetbridge-bb72b",
+  storageBucket: "meetbridge-bb72b.firebasestorage.app",
+  messagingSenderId: "509241057936",
+  appId: "1:509241057936:web:3d604b99459e2c19c22e15",
+  measurementId: "G-5XVPLCL7HY"
   
 };
 
